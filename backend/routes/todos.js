@@ -6,7 +6,7 @@ const ObjectId = mongoose.ObjectId;
 
 const taskRoutes =  Router();
 
-taskRoutes.post("/todos", auth, async (req, res) => {
+taskRoutes.post("/task", auth, async (req, res) => {
   const { title, description } = req.body;
 
   try{
@@ -14,100 +14,91 @@ taskRoutes.post("/todos", auth, async (req, res) => {
       title: title,
       description: description,
       userId: req.userId
-    }) 
+    });
     res.status(201).json({
       message: "Task created successfully!",
       task: newTask
-    })
+    });
   } catch(e) {
-    res.status(400).json({
+    res.status(404).json({
       message: "Task cannot be created",
       error: e.message
-    })
+    });
   }
-  
-})
+});
 
-taskRoutes.get("/todos", auth, async (req, res) => {
-   
+taskRoutes.get("/task", auth, async (req, res) => {
+
   try {
     const tasks = await Tasks.find({ userId: req.userId });
-    if(tasks) {
-      return res.status(200).json({
+    return res.status(200).json({
         tasks
-      })
-    } else {
-      console.log("No tasks ")
-      return null;
-    
-    }
-  }catch(e){
-    return res.status(400).json({
-      message: "error while finding tasks",
+      });
+    } catch(e){
+    return res.status(404).json({
+      message: "Error while finding tasks",
       error: e.message
-    })
-
+    });
   }
+});
 
-})
-
-taskRoutes.get("/todos/:id", auth, async (req, res) => {
+taskRoutes.get("/task/:id", auth, async (req, res) => {
   try{
-    const todoId = req.params.id;
-    const todo = await Tasks.findById(todoId);
-
-    if(!todo){
-      return res.status(401).json({
-        message: "Todo does not exists"
-      })
-    } else {
-      return res.status(200).json(todo);
+    const task = await Tasks.findById(req.params.id);
+    if(task.userId.toString() !== req.userId){
+      return res.status(403).json({
+        message:"Forbidden"
+      });
     }
+    return res.status(200).json(task);
+   
   } catch(e) {
     return res.status(400).json({
       message: "Error while fetching todo",
       error: e.message
-    })
+    });
   }
-})
+});
 
-taskRoutes.put("/todos/:id", auth, async (req, res) => {
+taskRoutes.put("/task/:id", auth, async (req, res) => {
   try{
-    const taskId = req.params.id;
-    const task = await Tasks.findById(taskId);
-
-    if(!task){
-      return res.status(400).json({
-        message: "Todo does not exists"
-      })
+    const task = await Tasks.findById(req.params.id);
+    if(task.userId.toString() !== req.userId){
+      return res.status(403).json({
+        message:"Forbidden"
+      });
     }
 
     const newTask = await Tasks.findByIdAndUpdate(req.params.id, req.body,{
       new: true,
-    })
+    });
 
     return res.status(200).json(newTask)
   } catch(e) {
     return res.status(400).json({
-      message: "Eroor while updating task",
+      message: "Error while updating task",
       error: e.message
-    })
+    });
   }
-  
-})
+});
 
-taskRoutes.delete("/todos/:id", async (req, res) => {
+taskRoutes.delete("/task/:id", auth, async (req, res) => {
   try{
-    const taskId =  req.params.id;
-    const task = await Tasks.findById(taskId);
+    const task = await Tasks.findById(req.params.id);
 
     if(!task){
-      return res.status(400).json({
-        message: "Todo doesnt exists"
-      })
+      return res.status(404).json({
+        message: "Task doesn't exist"
+      });
     }
 
-    const deletedTodo = await Tasks.findByIdAndDelete(taskId, req.body);
+    if(task.userId.toString() !== req.userId){
+      return res.status(403).json({
+        message: "Not authorized"
+      });
+    }
+
+    const deletedTodo = await Tasks.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({
       message: "Task deleted successfully",
@@ -117,9 +108,9 @@ taskRoutes.delete("/todos/:id", async (req, res) => {
     return res.status(400).json({
       message:"Error while deleting task",
       error: e.message
-    })
+    });
   }
-})
+});
 
 
 export default taskRoutes;

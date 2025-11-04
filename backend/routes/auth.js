@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import { Router } from "express";
 import { User} from "../data/store.js"
 import jwt from "jsonwebtoken";
+import auth from "../middleware/auth.js";
 
 const secret = process.env.JWT_SECRET;
 
@@ -45,14 +46,14 @@ usersRoutes.post("/signup", async (req, res) => {
   }
 })
 
-usersRoutes.post("/signin", async (req, res) => {
+usersRoutes.post("/login", async (req, res) => {
   const { email, password } = req.body;
   
   const existingUser = await User.findOne({ email });
 
   if(!existingUser) {
-    res.status(400).json({
-      message: "User does not exist"
+    return res.status(404).json({
+      message: "Email not found"
     })
   }
 
@@ -61,22 +62,27 @@ usersRoutes.post("/signin", async (req, res) => {
   if(matchPassword){
     const token = jwt.sign({
       id : existingUser._id.toString()
-    }, secret)
+    }, secret, {expiresIn: "1hr"})
     res.status(200).json({
-      token: token
+      token: token,
+      user: {
+        id: existingUser._id,
+        username: existingUser.username,
+        email: existingUser.email
+      }
     })
   } else {
-    res.status(401).json({
-      message: "Incorrect credentials"
+    return res.status(400).json({
+      message: "Passwords does not match"
     })
   }
 })
 
-usersRoutes.get("/me", async (req, res) => {
+usersRoutes.get("/me", auth, async (req, res) => {
   
   try {
-    const currentUser = await User.findOne(req.body._id);
-    return res.status(200).json(currentUser._id);
+    const currentUser = await User.findById(req.userId).select("-password");
+    return res.status(200).json(currentUser);
   } catch(e) {
     return res.status(401).json({
       message: "User does not exits"

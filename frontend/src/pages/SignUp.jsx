@@ -26,6 +26,11 @@ function SignUp ()  {
 
   return (
     <div className='auth-wrapper'> 
+    <form onSubmit ={(e) => {
+        e.preventDefault()
+        handleSignin()
+      }}
+    >
       <div>
         <h3 className="signup-greet">Dont have account? Sign up!</h3>
       </div>
@@ -72,13 +77,15 @@ function SignUp ()  {
         <div>
           <button
             className="signup-button"
-            onClick={handleSignin}
+            type="submit"
           >Sign up</button>
         </div>
         <p className="switch-text">
           Already have an account? <Link className={"link-style"} to="/login">Login Here.</Link>
         </p>
       </div>
+    </form>
+      
     </div>
   );
 }

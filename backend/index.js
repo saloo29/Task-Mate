@@ -4,9 +4,9 @@ dotenv.config();
 import express, { json } from "express";
 import cors from "cors";
 import { v4 as uuid4 } from 'uuid';
-import usersRoutes from "./backend/routes/auth.js";
-import taskRoutes from "./backend/routes/todos.js"
-import { connectDB } from "./backend/db/conn.mjs";
+import usersRoutes from "./routes/auth.js";
+import taskRoutes from "./routes/todos.js"
+import { connectDB } from "./db/conn.mjs";
 
 
 const app = express();
@@ -16,6 +16,10 @@ app.use(cors());
 
 app.use("/api/users", usersRoutes);
 app.use("/api/tasks", taskRoutes);
+
+app.get('/', (req, res) => {
+  res.json({ message: "Hello from backend!" });
+});
 
 let requestCount = 0;
 
